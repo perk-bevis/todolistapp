@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    let uniqId = 0;
+
+    const FILTERS = {
+      all: () => true,
+      active: (todo) => !todo.completed,
+      completed: (todo) => todo.completed,
+    };
+
+    function Header() {
+      const [inputValue, setInputValue] = React.useState('');
+      const [todos, setTodos] = React.useState([])
+      const [filter, setFilter] = React.useState('all');
+      const [nextId, setNextId] = React.useState(1);
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (inputValue.trim()) {
+          setTodos([...todos,
+          { id: ++uniqId, text: inputValue, completed: false }
+          ]);
+          setInputValue('');
+        }
+      };
+
+      const handleDelete = (idToDelete) => {
+        const newTodos = todos.filter((todo) => todo.id !== idToDelete);
+        setTodos(newTodos)
+      };
+
+      const handleClearCompleted = () => {
+        const activeTodos = todos.filter(todo => !todo.completed);
+        setTodos(activeTodos);
+      };
+
+      const toggleTodo = (id) => {
+        setTodos((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+        );
+      };
+
+      const itemsLeft = todos.filter((t) => !t.completed).length;
+      const filteredTodos = todos.filter(FILTERS[filter]);
+      return (
+        <div className="todoapp">
+          <div className="heading-form">
+            <form className="heading-forms" onSubmit={handleSubmit}>
+              <input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                type="text"
+                placeholder="What needs to be done?"
+                autoFocus
+              />
+              <button className="button" type="submit">Them</button>
+            </form>
+          </div>
+          <TodoList todos={todos} onToggle={toggleTodo} onDelete={handleDelete} />
+          <Footer
+            itemsLeft={itemsLeft}
+            filter={filter}
+            setFilter={setFilter}
+            onClearCompleted={handleClearCompleted}
+            hasCompleted={todos.some((t) => t.completed)}
+          />
+        </div>
+      );
+    }
+
+    function TodoList({ todos, onToggle, onDelete }) {
+      return (
+        <ul className="todo-list">
+          {todos.map((item) => (
+            <li key={item.id}>
+              <div className="todo-item">
+                <input
+                  id={`todo-${item.id}`}
+                  type="checkbox"
+                  className="todo-checkbox"
+                  checked={item.completed}
+                  onChange={() => onToggle(item.id)}
+                />
+                <label
+                  htmlFor={`todo-${item.id}`}
+                  className={`todo-label ${item.completed ? 'is-completed' : ''}`}
+                >
+                  {item.text}
+                </label>
+                <button
+                  type="button"
+                  className="todo-delete"
+                  onClick={() => onDelete(item.id)}
+                >
+                  ×
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+     function Footer({ itemsLeft, filter, setFilter, onClearCompleted, hasCompleted }) {
+      const filterNames = Object.keys(FILTERS);
+
+      return (
+        <footer className="todo-footer">
+          <span className="todo-count">
+            <strong>{itemsLeft}</strong> item{itemsLeft !== 1 ? 's' : ''} left
+          </span>
+
+          <ul className="filters">
+            {filterNames.map((name) => (
+              <li key={name}>
+                <button
+                  type="button"
+                  className={filter === name ? 'selected' : ''}
+                  onClick={() => setFilter(name)}
+                >
+                  {name.charAt(0).toUpperCase() + name.slice(1)}
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <button
+            type="button"
+            className="clear-completed"
+            onClick={onClearCompleted}
+            disabled={!hasCompleted}
+          >
+            Clear completed
+          </button>
+        </footer>
+      );
+    }
+
+    const app = (
+      <>
+        <Header />
+      </>
+    )
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(app);
+  </script>
+</body>
+
+</html>
